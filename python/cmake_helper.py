@@ -84,35 +84,3 @@ def walk_up(bottom):
 
     for x in walk_up(new_path):
         yield x
-
-
-# not used anymore
-##################
-
-def old_find_includes(filename, base_dir='.'):
-    csrcdir = find_cmake_srcdir(filename, base_dir=base_dir)
-    if csrcdir is None:
-        return []
-    p = path.join(csrcdir, 'flags.make')
-    with open(p) as f:
-        for l in f:
-            if 'CXX_FLAGS' in l:
-                return [x[2:] for x in l.split() if x[0:2] == '-I']
-    return []
-
-def find_cmake_srcdir(filename, base_dir='.'):
-    def check_fn(fname):
-        with open(fname) as f:
-            for l in f:
-                if filename in l:
-                    return True
-        return False
-
-    csrcdir = first(find_cmakefiles(base_dir=base_dir))
-    if csrcdir is None:
-        return None
-    res = first(find_file('DependInfo.cmake', base_dir=csrcdir, check_fn=check_fn, walk_down=True))
-    if res is None:
-        return None
-    return path.dirname(res)
-
