@@ -29,8 +29,7 @@ def find_cmakefiles(base_dir='.'):
     def check_fn(dname):
         return path.isdir(path.join(dname, 'CMakeFiles'))
 
-    for p in find_dir('build', base_dir=base_dir, check_fn=check_fn):
-        yield path.join(p, 'CMakeFiles')
+    return find_dir('build', base_dir=base_dir, check_fn=check_fn)
 
 def find_dir(dirname, base_dir='.', check_fn=None):
     return find_file(dirname, base_dir=base_dir, is_dir=True, check_fn=check_fn)
