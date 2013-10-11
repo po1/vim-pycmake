@@ -36,7 +36,7 @@ def find_dir(dirname, base_dir='.', check_fn=None):
 
 def find_file(fname, base_dir='.', is_dir=False, check_fn=None, walk_down=False):
     wk = os.walk if walk_down else walk_up
-    for r, d, f in wk(base_dir):
+    for r, d, f in wk(base_dir, followlinks=True):
         l = d if is_dir else f
         if fname in l:
             fpath = path.join(r, fname)
@@ -51,13 +51,14 @@ def first(gen):
     except StopIteration:
         return None
 
-def walk_up(bottom):
+def walk_up(bottom, followlinks=False):
     """
     mimic os.walk, but walk 'up'
     instead of down the directory tree
     """
 
-    bottom = path.realpath(bottom)
+    fullpath = path.abspath if followlinks else path.realpath
+    bottom = fullpath(bottom)
 
     #get files in current dir
     try:
@@ -75,11 +76,11 @@ def walk_up(bottom):
 
     yield bottom, dirs, nondirs
 
-    new_path = path.realpath(path.join(bottom, '..'))
+    new_path = fullpath(path.join(bottom, '..'))
 
     # see if we are at the top
     if new_path == bottom:
         return
 
-    for x in walk_up(new_path):
+    for x in walk_up(new_path, followlinks=followlinks):
         yield x
