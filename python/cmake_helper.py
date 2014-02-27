@@ -1,7 +1,7 @@
 import os
 from os import path
 
-def find_includes(base_dir='.'):
+def find_includes(file_name, base_dir='.'):
     """
     This is the main function of this file.
     Given the path to a folder, it will scan up the tree
@@ -17,22 +17,40 @@ def find_includes(base_dir='.'):
     if cfdir is None:
         return []
     includes = set()
-    for p in find_file('flags.make', base_dir=cfdir, walk_down=True):
-        with open(p) as f:
-            for l in f:
-                if 'CXX_FLAGS' in l:
-                    includes.update([x[2:] for x in l.split() if x[0:2] == '-I'])
+    for p in find_contains('link.txt', base_dir=cfdir, walk_down=True):
+        with open(os.path.join(p, 'link.txt')) as f:
+            if file_name in f.read():
+                update_includes(includes, os.path.join(p, 'flags.make'))
     return list(includes)
 
+def find_git_ctags(base_dir='.'):
+    git_root = first(find_dir('.git', base_dir=base_dir))
+    if git_root is not None:
+        tags = os.path.join(git_root, 'tags')
+        if os.path.isfile(tags):
+            return tags
+    return None
 
-def find_cmakefiles(base_dir='.'):
+def update_includes(includes, flags_file):
+    with open(flags_file) as f:
+        for l in f:
+            if 'CXX_FLAGS' in l:
+                includes.update([x[2:] for x in l.split() if x[0:2] == '-I'])
+
+def find_cmakefiles(base_dir='.', build_dir='build'):
     def check_fn(dname):
         return path.isdir(path.join(dname, 'CMakeFiles'))
 
-    return find_dir('build', base_dir=base_dir, check_fn=check_fn)
+    return find_dir(build_dir, base_dir=base_dir, check_fn=check_fn)
 
 def find_dir(dirname, base_dir='.', check_fn=None):
     return find_file(dirname, base_dir=base_dir, is_dir=True, check_fn=check_fn)
+
+def find_contains(contents, base_dir='.', walk_down=False):
+    wk = os.walk if walk_down else walk_up
+    for r, d, f in wk(base_dir, followlinks=True):
+        if contents in d or contents in f:
+            yield r
 
 def find_file(fname, base_dir='.', is_dir=False, check_fn=None, walk_down=False):
     wk = os.walk if walk_down else walk_up
